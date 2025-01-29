@@ -5,7 +5,7 @@ import random
 import streamlit as st
 from dotenv import load_dotenv
 
-from app.pipeline.tc_pipeline import process_tc
+from app.tools.technical_contradictions import solve_tc
 
 load_dotenv()
 
@@ -85,10 +85,8 @@ def main():
     if generate_button:
         if user_input:
             with st.spinner('Processing...'):
-                output = process_tc(
-                    user_input,
-                )
-                st.write(output.model_dump())
+                contradiction = solve_tc(user_input)
+                st.write(contradiction.model_dump())
         else:
             st.warning("Please enter a problem description.")
 
