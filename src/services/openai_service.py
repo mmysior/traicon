@@ -6,7 +6,6 @@ from typing import Dict, List, Type
 import instructor
 
 from dotenv import load_dotenv
-from langfuse import Langfuse
 from langfuse.decorators import langfuse_context, observe
 from openai import AsyncOpenAI, OpenAI
 from pydantic import BaseModel
@@ -29,14 +28,13 @@ class BaseService:
     """
     Base service class.
     """
-    def __init__(self, provider: str = 'openai', langfuse_enabled: bool = False):
+    def __init__(self, provider: str = 'openai'):
         """
         Initialize the OpenAI service.
         """
         load_dotenv()
         self.provider = provider
         self.client = self._get_client()
-        self.langfuse = Langfuse(enabled=langfuse_enabled)
         self.available_models = self._get_available_models()
         self.default_model = self._get_default_model()
 
