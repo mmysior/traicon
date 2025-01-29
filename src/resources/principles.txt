@@ -1,0 +1,40 @@
+Segmentation: Divide an object into independent parts or increase its degree of segmentation.
+Taking out: Separate an interfering part or single out the only necessary part of an object.
+Local quality: Change an object's structure from uniform to non-uniform, making each part fulfill a useful function.
+Asymmetry: Change the shape of an object from symmetrical to asymmetrical to improve functionality.
+Merging: Bring similar objects closer to perform parallel operations or make operations contiguous.
+Universality: Make a part or object perform multiple functions, eliminating the need for other parts.
+Nested doll: Place one object inside another or make one part pass through a cavity in another.
+Anti-weight: Compensate for the weight of an object by merging it with others that provide lift or interact with the environment.
+Preliminary anti-action: Replace an action with harmful effects with anti-actions to control these effects.
+Preliminary action: Perform required changes to an object beforehand to avoid problems during use.
+Beforehand cushioning: Prepare emergency measures to compensate for the relatively low reliability of an object.
+Equipotentiality: Change conditions to avoid the need for lifting or moving an object.
+The other way round: Reverse the usual process or way to achieve the desired effect.
+Spheroidality - Curvature: Go from flat surfaces to spherical forms or use rollers, balls, spirals.
+Dynamics: Make objects or environments capable of changing to be useful under different conditions.
+Partial or excessive actions: If 100% of an object is hard to achieve, use a little less or a bit more to suffice.
+Another dimension: Use aspects of 3D space or other directions/multiples to solve a problem.
+Mechanical vibration: Use oscillations or resonances to improve processes.
+Periodic action: Replace continuous action with periodic ones or use pauses between impulses to save resources.
+Continuity of useful action: Make all parts of an object work at full load, eliminating idle or intermittent actions.
+Skipping: Conduct processes, or certain stages of processes, without intermediate steps.
+Blessing in disguise: Utilize harmful factors, particularly environmental, to achieve a positive effect.
+Feedback: Introduce feedback to modify a process or enhance a reaction.
+Intermediary: Use an intermediate carrier or process to transfer or temporarily store energy.
+Self-service: Allow objects to serve themselves by performing auxiliary helpful functions.
+Copying: Use cheaper or simpler replicas of an object or process where less precision is needed.
+Cheap short-living objects: Replace expensive objects with inexpensive ones to reduce cost, even if it means a shorter lifespan.
+Mechanics substitution: Replace a mechanical means with a sensory (optical, acoustic, taste, or olfactory) method.
+Pneumatics and hydraulics: Use gases and liquids to achieve or improve function instead of solid parts.
+Flexible shells and thin films: Use flexible materials to replace traditional rigid materials.
+Porous materials: Make an object porous or add porous elements to introduce a new effect (e.g., absorption).
+Color changes: Use color changes to improve the visibility of changes or indicate control processes.
+Homogeneity: Make materials interacting with an object have similar physical properties to reduce problems.
+Discarding and recovering: Make parts of an object that have fulfilled their functions easily recoverable or replaceable.
+Parameter changes: Change an object's physical state (e.g., temperature, concentration, density) to improve its performance.
+Phase transitions: Use phenomena occurring during phase transitions (e.g., volume changes, energy absorption/release).
+Thermal expansion: Use thermal expansion or contraction of materials to move or reshape objects.
+Strong oxidants: Use strong oxidants to speed up a reaction or process.
+Inert atmosphere: Perform a process in an inert atmosphere to prevent undesirable reactions or changes.
+Composite materials: Use composite materials to achieve the optimal combination of properties not available in any single material.
