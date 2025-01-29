@@ -1,0 +1,39 @@
+Weight of moving object
+Weight of stationary object
+Length of moving object
+Length of stationary object
+Area of moving object
+Area of stationary object
+Volume of moving object
+Volume of stationary object
+Speed
+Force
+Stress or pressure
+Shape
+Stability of the object’s composition
+Strength
+Duration of action by a moving object
+Duration of action by a stationary object
+Temperature
+Illumination intensity
+Use of energy by moving object
+Use of energy by stationary object
+Power
+Loss of Energy
+Loss of substance
+Loss of Information
+Loss of Time
+Quantity of substance/the matter
+Reliability
+Measurement accuracy
+Manufacturing precision
+External harm affects the object
+Object-generated harmful factors
+Ease of manufacture
+Ease of operation
+Ease of repair
+Adaptability or versatility
+Device complexity
+Difficulty of detecting and measuring
+Extent of automation
+Productivity
