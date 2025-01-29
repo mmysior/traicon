@@ -11,7 +11,7 @@ The module uses LLM services to analyze problem descriptions and extract key com
 Parameters and principles are mapped using the TRIZ contradiction matrix.
 
 """
-from typing import Any, List
+from typing import Any, List, Dict
 from uuid import uuid4
 
 from langfuse.decorators import observe, langfuse_context
@@ -99,34 +99,61 @@ def formulate_tc(problem_desc: str, model: str = "gpt-4o-mini", **kwargs: Any) -
         **kwargs
     )
 
-@observe(name="assign_parameters")
-def assign_parameters(description: str, n: int = 1) -> List[int]:
+@observe(name="assign_parameters", capture_input=False)
+def assign_parameters(positive_effect: str, negative_effect: str, n: int = 1) -> Dict[str, List[int]]:
     """
     Assign parameters to a description.
     """
-    embedding = embedding_service.create_embedding(description)
-    parameters = load_params_data()
+    def find_parameters(text: str, n: int = 1) -> List[int]:
+        """
+        Assign parameters to a description.
+        """
+        embedding = embedding_service.create_embedding(text)
+        parameters = load_params_data()
 
-    distances = embedding_service.find_n_closest(
-        query_vector=embedding,
-        embeddings=[param["embedding"]["vector"] for param in parameters],
-        n=n,
+        distances = embedding_service.find_n_closest(
+            query_vector=embedding,
+            embeddings=[param["embedding"]["vector"] for param in parameters],
+            n=n,
+        )
+
+        return [parameters[dist["index"]]["index"] for dist in distances]
+
+    langfuse_context.update_current_observation(
+        input={
+            "positive_effect": positive_effect,
+            "negative_effect": negative_effect,
+        },
+        metadata={"n": n},
     )
 
-    return [parameters[dist["index"]]["index"] for dist in distances]
+    improving_parameters = find_parameters(positive_effect, n=n)
+    preserving_parameters = find_parameters(negative_effect, n=n)
 
-@observe(name="get_principles")
-def get_principles(improving_parameter: List[int], preserving_parameter: List[int]) -> List[int]:
+    return {
+        "improving_parameters": improving_parameters,
+        "preserving_parameters": preserving_parameters,
+    }
+
+@observe(name="get_principles", capture_input=False, capture_output=False)
+def get_principles(improving_parameters: List[int], preserving_parameters: List[int]) -> List[int]:
     """
     Get principles from a list of parameters.
     """
-    return get_inventive_principles(improving_parameter, preserving_parameter)
+    inventive_principles = get_inventive_principles(improving_parameters, preserving_parameters)
+
+    langfuse_context.update_current_observation(
+        input={"improving_parameters": improving_parameters, "preserving_parameters": preserving_parameters},
+        output=inventive_principles,
+    )
+
+    return inventive_principles
 
 # -------------------------------------------------------------------------------------------------
 # MAIN FUNCTION
 # -------------------------------------------------------------------------------------------------
 
-@observe(name="process_tc")
+@observe(name="process_tc", capture_input=False)
 def process_tc(
     problem_desc: str,
     n: int = 1,
@@ -146,16 +173,23 @@ def process_tc(
         TechnicalContradiction: Complete analysis of the technical contradiction
     """
     # Extract contradiction components
-    tc_model = formulate_tc(problem_desc, model=model, **kwargs)
+    kwargs_clone = kwargs.copy()
+
+    langfuse_context.update_current_observation(
+        input=problem_desc,
+        model=model,
+        metadata=kwargs_clone
+    )
+
+    tc_model = formulate_tc(problem_desc, model=model, **kwargs_clone)
 
     # Get parameters for positive and negative effects
-    parameters_to_improve = assign_parameters(tc_model.positive_effect, n=n)
-    parameters_to_preserve = assign_parameters(tc_model.negative_effect, n=n)
+    standard_parameters = assign_parameters(tc_model.positive_effect, tc_model.negative_effect, n=n)
 
     # Get principles
     principles = get_principles(
-        improving_parameter=parameters_to_improve,
-        preserving_parameter=parameters_to_preserve
+        improving_parameters=standard_parameters["improving_parameters"],
+        preserving_parameters=standard_parameters["preserving_parameters"]
     )
 
     return TechnicalContradiction(
@@ -164,7 +198,7 @@ def process_tc(
         action=tc_model.action,
         positive_effect=tc_model.positive_effect,
         negative_effect=tc_model.negative_effect,
-        parameters_to_improve=parameters_to_improve,
-        parameters_to_preserve=parameters_to_preserve,
+        parameters_to_improve=standard_parameters["improving_parameters"],
+        parameters_to_preserve=standard_parameters["preserving_parameters"],
         principles=principles
     )
