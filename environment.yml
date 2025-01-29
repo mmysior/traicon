@@ -10,4 +10,14 @@ dependencies:
   - pip:
     - python-dotenv
     - mkdocs
+    - openai
+    - anthropic
+    - pydantic
+    - pydantic-settings
+    - instructor
+    - requests
+    - langfuse
+    - tiktoken
+    - pickle-function-cache
+    - streamlit
     - -e .
