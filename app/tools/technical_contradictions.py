@@ -27,7 +27,6 @@ from src.utils.matrix import (
     get_principle_name
 )
 
-
 # -------------------------------------------------------------------------------------------------
 # Instantiate services
 # -------------------------------------------------------------------------------------------------
@@ -70,7 +69,7 @@ class TechnicalContradiction(BaseModel):
 # Define functions
 # -------------------------------------------------------------------------------------------------
 
-@observe(name="classify_problem")
+@observe(name="ClassifyProblem", capture_input=False)
 def classify_problem(problem_desc: str, model: str = "gpt-4o-mini", **kwargs: Any) -> bool:
     """
     Classify whether input text describes a technical contradiction.
@@ -94,8 +93,8 @@ def classify_problem(problem_desc: str, model: str = "gpt-4o-mini", **kwargs: An
     )
     return response.lower() == "true"
 
-@observe(name="formulate_tc", capture_input=False)
-def formulate_tc(problem_desc: str, model: str = "gpt-4o-mini", **kwargs: Any) -> TCModel:
+@observe(name="ExtractTC", capture_input=False)
+def extract_tc(problem_desc: str, model: str = "gpt-4o-mini", **kwargs: Any) -> TCModel:
     """
     Formulate a technical contradiction from a problem description.
     """
@@ -115,7 +114,7 @@ def formulate_tc(problem_desc: str, model: str = "gpt-4o-mini", **kwargs: Any) -
         **kwargs
     )
 
-@observe(name="assign_parameters", capture_input=False)
+@observe(name="AssignParameters", capture_input=False)
 def assign_parameters(positive_effect: str, negative_effect: str, n: int = 1) -> Dict[str, List[int]]:
     """
     Assign parameters to a description.
@@ -151,7 +150,7 @@ def assign_parameters(positive_effect: str, negative_effect: str, n: int = 1) ->
         "preserving_parameters": preserving_parameters,
     }
 
-@observe(name="get_principles", capture_input=False, capture_output=False)
+@observe(name="GetIPs", capture_input=False, capture_output=False)
 def get_principles(improving_parameters: List[int], preserving_parameters: List[int]) -> List[int]:
     """
     Get principles from a list of parameters.
@@ -165,39 +164,7 @@ def get_principles(improving_parameters: List[int], preserving_parameters: List[
 
     return inventive_principles
 
-@observe(name="generate_solution", capture_input=False)
-def generate_solution(problem_desc: str, ip_index: int, model: str = "gpt-4o-mini", **kwargs: Any) -> str:
-    """
-    Generate a solution for a technical contradiction asynchronously.
-    """
-    kwargs_clone = kwargs.copy()
-
-    # Retrieve inventive principle
-    ip_description = get_principle_description(ip_index)
-    ip_name = get_principle_name(ip_index)
-
-    # Build context
-    context = f"Inventive Principle Name: {ip_name}\nDescription: {ip_description}"
-    messages = TCSolutionPrompt.compile_messages(context=context, query=problem_desc)
-
-    langfuse_context.update_current_observation(
-        input={
-            "problem_desc": problem_desc,
-            "ip_index": ip_index
-        },
-        model=model,
-        metadata=kwargs_clone
-    )
-
-    response = openai_service.get_answer(
-        messages=messages,
-        model=model,
-        **kwargs
-    )
-
-    return response
-
-@observe(name="generate_solutions", capture_input=False)
+@observe(name="GenerateSolutions", capture_input=False)
 def generate_solutions(
     problem_desc: str,
     principles: List[int],
@@ -205,7 +172,7 @@ def generate_solutions(
     **kwargs: Any
 ) -> List[Solution]:
     """
-    Generate solutions for a technical contradiction asynchronously.
+    Generate solutions for a technical contradiction.
     
     Args:
         problem_desc: Description of the technical problem
@@ -214,7 +181,7 @@ def generate_solutions(
         **kwargs: Additional arguments for the LLM
         
     Returns:
-        Solutions: List of solutions
+        List[Solution]: List of generated solutions
     """
     kwargs_clone = kwargs.copy()
 
@@ -227,16 +194,31 @@ def generate_solutions(
         metadata=kwargs_clone
     )
 
-    # Create Solution objects from results
-    solutions = [
-        Solution(
+    solutions = []
+    for ip_index in principles:
+        # Retrieve inventive principle info
+        ip_description = get_principle_description(ip_index)
+        ip_name = get_principle_name(ip_index)
+
+        # Build context
+        context = f"Inventive Principle Name: {ip_name}\nDescription: {ip_description}"
+        messages = TCSolutionPrompt.compile_messages(context=context, query=problem_desc)
+
+        # Generate solution
+        response = openai_service.get_answer(
+            messages=messages,
+            model=model,
+            **kwargs
+        )
+
+        # Create Solution object
+        solution = Solution(
             uuid=str(uuid4()),
             principle_id=ip_index,
-            principle_name=get_principle_name(ip_index),
-            solution=generate_solution(problem_desc, ip_index, model=model, **kwargs_clone)
+            principle_name=ip_name,
+            solution=response
         )
-        for ip_index in principles
-    ]
+        solutions.append(solution)
 
     return solutions
 
@@ -244,7 +226,7 @@ def generate_solutions(
 # Pipelines
 # -------------------------------------------------------------------------------------------------
 
-@observe(name="process_tc", capture_input=False)
+@observe(name="SolveTC", capture_input=False)
 def solve_tc(
     problem_desc: str,
     n: int = 1,
@@ -272,7 +254,7 @@ def solve_tc(
     )
 
     # Extract contradiction components - make this async
-    tc_model = formulate_tc(problem_desc, model=model, **kwargs_clone)
+    tc_model = extract_tc(problem_desc, model=model, **kwargs_clone)
 
     # These operations are synchronous and can remain as is
     standard_parameters = assign_parameters(tc_model.positive_effect, tc_model.negative_effect, n=n)
