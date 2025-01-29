@@ -64,7 +64,7 @@ def main():
     )
 
     # Move buttons below the text area
-    button_col1, button_col2, button_col3 = st.columns(3)
+    button_col1, button_col2, button_col3 = st.columns([1, 1.5, 1.5])
 
     with button_col1:
         generate_button = st.button(
@@ -86,7 +86,32 @@ def main():
         if user_input:
             with st.spinner('Processing...'):
                 contradiction = solve_tc(user_input)
-                st.write(contradiction.model_dump())
+
+                col1, col2 = st.columns([1, 3])
+                with col1:
+                    st.write("### Action")
+                with col2:
+                    st.info(contradiction.action)
+
+                col3, col4 = st.columns([1, 3])
+                with col3:
+                    st.write("### Positive Effect")
+                with col4:
+                    st.success(f"{contradiction.parameters_to_improve} {contradiction.positive_effect}")
+
+                col5, col6 = st.columns([1, 3])
+                with col5:
+                    st.write("### Negative Effect")
+                with col6:
+                    st.error(f"{contradiction.parameters_to_preserve} {contradiction.negative_effect}")
+
+                # Display Inventive Principles
+                st.write(f"### Solutions for Inventive Principles {contradiction.principles}")
+
+                # Display Solutions in collapsible blocks with markdown formatting
+                for solution in contradiction.solutions:
+                    with st.expander(f"({solution.principle_id}) {solution.principle_name}", icon="💡"):
+                        st.markdown(solution.solution)
         else:
             st.warning("Please enter a problem description.")
 

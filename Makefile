@@ -57,6 +57,10 @@ principles:
 	rm -f src/resources/principles.json
 	$(PYTHON_INTERPRETER) src/utils/make_principles.py
 
+.PHONY: run
+run:
+	streamlit run app/main.py
+
 
 #################################################################################
 # PROJECT RULES                                                                 #
