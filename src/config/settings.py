@@ -51,7 +51,7 @@ class OpenAISettings(LLMProviderSettings):
         default_model (str): The default model to use for OpenAI. Defaults to "gpt-4o-mini-2024-07-18".
     """
     default_model: str = "gpt-4o-mini"
-
+    embedding_model: str = "text-embedding-3-large"
     @classmethod
     def get_available_models(cls) -> List[str]:
         """Fetch the list of available models from the Groq API."""
@@ -83,6 +83,7 @@ class OllamaSettings(LLMProviderSettings):
         base_url (str): The base URL for Ollama API. Defaults to "http://localhost:11434/v1".
     """
     default_model: str = "llama3.1:8b"
+    embedding_model: str = "mxbai-embed-large:335m"
     base_url: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434") + "/v1"
 
     @classmethod

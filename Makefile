@@ -46,8 +46,16 @@ create_environment:
 	conda env create --name $(PROJECT_NAME) -f environment.yml
 	
 	@echo ">>> conda env created. Activate with:\nconda activate $(PROJECT_NAME)"
-	
 
+.PHONY: parameters
+parameters:
+	rm -f src/resources/parameters.json
+	$(PYTHON_INTERPRETER) src/utils/make_parameters.py
+
+.PHONY: principles
+principles:
+	rm -f src/resources/principles.json
+	$(PYTHON_INTERPRETER) src/utils/make_principles.py
 
 
 #################################################################################
