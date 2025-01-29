@@ -11,9 +11,10 @@ The module uses LLM services to analyze problem descriptions and extract key com
 Parameters and principles are mapped using the TRIZ contradiction matrix.
 
 """
-from typing import Any, Dict, List
+from typing import Any, List
 from uuid import uuid4
 
+from langfuse.decorators import observe, langfuse_context
 from pydantic import BaseModel
 
 from src.services.openai_service import OpenAIService
@@ -43,7 +44,7 @@ class TechnicalContradiction(BaseModel):
     parameters_to_preserve: List[int]
     principles: List[int]
 
-class TCComponents(BaseModel):
+class TCModel(BaseModel):
     """Simple Pydantic Model for Technical Contradiction components"""
     action: str
     positive_effect: str
@@ -53,6 +54,7 @@ class TCComponents(BaseModel):
 # Define functions
 # -------------------------------------------------------------------------------------------------
 
+@observe(name="classify_problem")
 def classify_problem(problem_desc: str, model: str = "gpt-4o-mini", **kwargs: Any) -> bool:
     """
     Classify whether input text describes a technical contradiction.
@@ -76,11 +78,55 @@ def classify_problem(problem_desc: str, model: str = "gpt-4o-mini", **kwargs: An
     )
     return response.lower() == "true"
 
+@observe(name="formulate_tc", as_type="generation", capture_input=False)
+def formulate_tc(problem_desc: str, model: str = "gpt-4o-mini", **kwargs: Any) -> TCModel:
+    """
+    Formulate a technical contradiction from a problem description.
+    """
+    kwargs_clone = kwargs.copy()
+    messages = TCExtractionPrompt().compile_messages(query=problem_desc)
+
+    langfuse_context.update_current_observation(
+        input=messages,
+        model=model,
+        metadata=kwargs_clone
+    )
+    return openai_service.create_structured_completion(
+        messages=messages,
+        response_model=TCModel,
+        model=model,
+        **kwargs
+    )
+
+@observe(name="assign_parameters")
+def assign_parameters(description: str, n: int = 1) -> List[int]:
+    """
+    Assign parameters to a description.
+    """
+    embedding = embedding_service.create_embedding(description)
+    parameters = load_params_data()
+
+    distances = embedding_service.find_n_closest(
+        query_vector=embedding,
+        embeddings=[param["embedding"]["vector"] for param in parameters],
+        n=n,
+    )
+
+    return [parameters[dist["index"]]["index"] for dist in distances]
+
+@observe(name="get_principles")
+def get_principles(improving_parameter: List[int], preserving_parameter: List[int]) -> List[int]:
+    """
+    Get principles from a list of parameters.
+    """
+    return get_inventive_principles(improving_parameter, preserving_parameter)
+
 # -------------------------------------------------------------------------------------------------
 # MAIN FUNCTION
 # -------------------------------------------------------------------------------------------------
 
-def formulate_tc(
+@observe(name="process_tc")
+def process_tc(
     problem_desc: str,
     n: int = 1,
     model: str = "gpt-4o-mini",
@@ -96,35 +142,17 @@ def formulate_tc(
         **kwargs: Additional arguments for the LLM
         
     Returns:
-        TechnicalContradictionOutput: Complete analysis of the technical contradiction
+        TechnicalContradiction: Complete analysis of the technical contradiction
     """
     # Extract contradiction components
-    contradiction_parts = openai_service.create_structured_completion(
-        messages=TCExtractionPrompt().compile_messages(query=problem_desc),
-        response_model=TCComponents,
-        model=model,
-        **kwargs
-    )
+    tc_model = formulate_tc(problem_desc, model=model, **kwargs)
 
-    # Get embeddings and search for parameters
-    positive_effect_embedding = embedding_service.create_embedding(contradiction_parts.positive_effect)
-    negative_effect_embedding = embedding_service.create_embedding(contradiction_parts.negative_effect)
-
-    parameters = load_params_data()
-
-    def find_closest_parameters(embedding: List[float], n: int) -> List[Dict[str, Any]]:
-        distances = embedding_service.find_n_closest(
-            query_vector=embedding,
-            embeddings=[param["embedding"]["vector"] for param in parameters],
-            n=n,
-        )
-        return [parameters[dist["index"]]["index"] for dist in distances]
-
-    parameters_to_improve = find_closest_parameters(positive_effect_embedding, n)
-    parameters_to_preserve = find_closest_parameters(negative_effect_embedding, n)
+    # Get parameters for positive and negative effects
+    parameters_to_improve = assign_parameters(tc_model.positive_effect, n=n)
+    parameters_to_preserve = assign_parameters(tc_model.negative_effect, n=n)
 
     # Get principles
-    principles = get_inventive_principles(
+    principles = get_principles(
         improving_parameter=parameters_to_improve,
         preserving_parameter=parameters_to_preserve
     )
@@ -132,9 +160,9 @@ def formulate_tc(
     return TechnicalContradiction(
         uuid=str(uuid4()),
         problem_desc=problem_desc,
-        action=contradiction_parts.action,
-        positive_effect=contradiction_parts.positive_effect,
-        negative_effect=contradiction_parts.negative_effect,
+        action=tc_model.action,
+        positive_effect=tc_model.positive_effect,
+        negative_effect=tc_model.negative_effect,
         parameters_to_improve=parameters_to_improve,
         parameters_to_preserve=parameters_to_preserve,
         principles=principles
