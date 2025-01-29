@@ -21,4 +21,5 @@ dependencies:
     - pickle-function-cache
     - streamlit
     - scipy
+    - pytest
     - -e .
