@@ -21,25 +21,25 @@ def get_random_example() -> str:
         str: A randomly selected example problem statement.
     """
     examples = [
-        """Your company polishes the edges of glass plates. Thousands of plates are polished each day. 
-        The edges of the glass plates are polished on a fast moving belt covered with abrasive materials. 
-        One day an order comes in for polishing glass plates which are only .010 inches thick. The first 
-        attempts to polish the edges are catastrophic. The edges are chipped so badly that the plates are 
-        unusable. Due to the high volume of plates which are normally processed, it is not practical to 
-        change the machinery. The problem would go away if the plates were thicker, but they only come thin.""",
+        "Your company polishes the edges of glass plates. Thousands of plates are polished each day. " \
+        "The edges of the glass plates are polished on a fast moving belt covered with abrasive materials. " \
+        "One day an order comes in for polishing glass plates which are only .010 inches thick. The first " \
+        "attempts to polish the edges are catastrophic. The edges are chipped so badly that the plates are " \
+        "unusable. Due to the high volume of plates which are normally processed, it is not practical to " \
+        "change the machinery. The problem would go away if the plates were thicker, but they only come thin.",
 
-        """High levels of radiation can damage the structure of cells and cause them to cease functioning. 
-        This is useful in the treatment of tumors. A beam of high energy radiation is focused on the tumor. 
-        After the procedure, the tumor shrinks. Unfortunately, the tissue surrounding the tumor is also 
-        damaged by the high energy radiation.""",
+        "High levels of radiation can damage the structure of cells and cause them to cease functioning. " \
+        "This is useful in the treatment of tumors. A beam of high energy radiation is focused on the tumor. " \
+        "After the procedure, the tumor shrinks. Unfortunately, the tissue surrounding the tumor is also " \
+        "damaged by the high energy radiation.",
 
-        """A small ship building company considers a contract to build a super yacht. The yacht is so big 
-        that only a third will fit into their dock. "We will need to build this in the open harbor." 
-        A frustrated engineer says. "We can't do that, we need the availability of lifts and tools.""",
+        "A small ship building company considers a contract to build a super yacht. The yacht is so big " \
+        "that only a third will fit into their dock. \"We will need to build this in the open harbor.\" " \
+        "A frustrated engineer says. \"We can't do that, we need the availability of lifts and tools.\"",
 
-        """The addition of bubbles to diving pools is a good way to keep diving injuries to a minimum. 
-        This is especially true when diving from great heights. Unfortunately, the diver is no longer 
-        buoyant in the water and finds it difficult to surface after a dive."""
+        "The addition of bubbles to diving pools is a good way to keep diving injuries to a minimum. " \
+        "This is especially true when diving from great heights. Unfortunately, the diver is no longer " \
+        "buoyant in the water and finds it difficult to surface after a dive."
     ]
     return random.choice(examples)
 
