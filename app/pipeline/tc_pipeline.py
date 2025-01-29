@@ -78,7 +78,7 @@ def classify_problem(problem_desc: str, model: str = "gpt-4o-mini", **kwargs: An
     )
     return response.lower() == "true"
 
-@observe(name="formulate_tc", as_type="generation", capture_input=False)
+@observe(name="formulate_tc", capture_input=False)
 def formulate_tc(problem_desc: str, model: str = "gpt-4o-mini", **kwargs: Any) -> TCModel:
     """
     Formulate a technical contradiction from a problem description.
@@ -87,10 +87,11 @@ def formulate_tc(problem_desc: str, model: str = "gpt-4o-mini", **kwargs: Any) -
     messages = TCExtractionPrompt().compile_messages(query=problem_desc)
 
     langfuse_context.update_current_observation(
-        input=messages,
+        input=problem_desc,
         model=model,
         metadata=kwargs_clone
     )
+
     return openai_service.create_structured_completion(
         messages=messages,
         response_model=TCModel,
