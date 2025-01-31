@@ -21,6 +21,8 @@ def initialize_session_state() -> None:
     """Initialize the session state."""
     if 'platform' not in st.session_state:
         st.session_state.platform = "openai"
+    if 'embedding_platform' not in st.session_state:
+        st.session_state.embedding_platform = "openai"
     if "models_list" not in st.session_state:
         st.session_state.models_list = settings.openai.get_available_models()
     if 'selected_llm' not in st.session_state:
@@ -78,9 +80,9 @@ def setup_sidebar() -> dict:
         key="platform",
         index=0,
         format_func=lambda x: {
-            "groq": "⚡️ Groq",
-            "openai": "🌐 OpenAI",
-            "ollama": "🦙 Ollama"
+            "groq": "Groq ⚡️",
+            "openai": "OpenAI 🌐",
+            "ollama": "Ollama 🦙"
         }.get(x, x),
         on_change=get_models_list,
         help="Select the platform to use for generating solutions."
@@ -92,6 +94,7 @@ def setup_sidebar() -> dict:
         key="model",
         help="Select the model to use for generating solutions."
     )
+
     # Temperature slider
     temperature = st.sidebar.slider(
         "Temperature",
@@ -120,9 +123,25 @@ def setup_sidebar() -> dict:
         key="max_tokens",
         help="Max Tokens is a parameter that controls the maximum number of tokens the model can output."
     )
+
+    st.sidebar.divider()
+
+    # Embedding platform selector
+    embedding_platform = st.sidebar.radio(
+        "Select Embedding Platform",
+        ("ollama", "openai"),
+        key="embedding_platform",
+        help="Select the embedding platform to use for generating solutions.",
+        format_func=lambda x: {
+            "ollama": "Ollama 🦙",
+            "openai": "OpenAI 🌐"
+        }.get(x, x)
+    )
+
     return {
         "platform": platform,
         "model": model,
+        "embedding_platform": embedding_platform,
         "temperature": temperature,
         "top_p": top_p,
         "max_tokens": max_tokens
@@ -139,7 +158,7 @@ def main():
     temperature = config["temperature"]
     top_p = config["top_p"]
     max_tokens = config["max_tokens"]
-    embedding_service = EmbeddingService(provider="ollama")
+    embedding_service = EmbeddingService(provider=config["embedding_platform"])
 
     st.write("# AI TRIZ Solution Generator 💡🤖")
 
