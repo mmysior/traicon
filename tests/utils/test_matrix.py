@@ -1,17 +1,23 @@
 # pylint: disable=line-too-long, missing-function-docstring, missing-module-docstring
 import pytest
 from src.utils.matrix import (
-    load_params_data,
+    load_parameters,
+    load_principles,
     get_inventive_principles,
     get_random_principles,
     get_principle_description,
     get_principle_name
 )
 
-def test_load_params_data():
-    params = load_params_data()
+def test_load_parameters():
+    params = load_parameters()
     assert isinstance(params, list)
     assert len(params) > 0
+
+def test_load_principles():
+    principles = load_principles()
+    assert isinstance(principles, list)
+    assert len(principles) > 0
 
 def test_get_inventive_principles():
     empty = get_inventive_principles(1, 2)
