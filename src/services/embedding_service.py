@@ -21,7 +21,7 @@ class BaseService:
         self.provider = provider
         self.client = self._get_client()
         self.available_models = self._get_available_models()
-        self.embedding_model = self._get_embedding_model()
+        self.model = self._get_embedding_model()
 
     def _get_client(self):
         """
@@ -60,7 +60,6 @@ class BaseService:
             raise ValueError(f"Invalid embedding model: {embedding_model}")
         return embedding_model
 
-
 class EmbeddingService(BaseService):
     """
     Service for creating and comparing embeddings.
@@ -84,7 +83,7 @@ class EmbeddingService(BaseService):
         if not isinstance(text, str) or not text.strip():
             raise ValueError("Text input must be a non-empty string")
 
-        model = model or self.embedding_model
+        model = model or self.model
         try:
             response = self.client.embeddings.create(
                 model=model,
@@ -110,7 +109,18 @@ class EmbeddingService(BaseService):
 
         Returns:
             List of dicts containing index and distance of closest matches
+
+        Raises:
+            ValueError: If query_vector and embeddings have different dimensions
         """
+        query_len = len(query_vector)
+        for i, vec in enumerate(embeddings):
+            if len(vec) != query_len:
+                raise ValueError(
+                    f"Embedding at index {i} has length {len(vec)}, "
+                    f"but query vector has length {query_len}"
+                )
+
         distances = [
             {"index": i, "distance": distance.cosine(query_vector, vec)}
             for i, vec in enumerate(embeddings)
@@ -152,7 +162,7 @@ class AsyncEmbeddingService(BaseService):
         if not isinstance(text, str) or not text.strip():
             raise ValueError("Text input must be a non-empty string")
 
-        model = model or self.embedding_model
+        model = model or self.model
         try:
             response = await self.client.embeddings.create(
                 model=model,
