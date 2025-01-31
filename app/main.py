@@ -6,12 +6,38 @@ import streamlit as st
 from dotenv import load_dotenv
 
 from app.tools.technical_contradictions import solve_tc
+from src.services.openai_service import OpenAIService
+from src.services.embedding_service import EmbeddingService
+from src.config.settings import get_settings
 
 load_dotenv()
+settings = get_settings()
 
 # -------------------------------------------------------------------------------------------------
 # Functions
 # -------------------------------------------------------------------------------------------------
+
+def initialize_session_state() -> None:
+    """Initialize the session state."""
+    if 'platform' not in st.session_state:
+        st.session_state.platform = "openai"
+    if "models_list" not in st.session_state:
+        st.session_state.models_list = settings.openai.get_available_models()
+    if 'selected_llm' not in st.session_state:
+        st.session_state.selected_llm = "gpt-4o-mini"
+
+def get_models_list() -> None:
+    """Get the list of available models for the given platform."""
+    platform = st.session_state.platform
+    if platform == "groq":
+        st.session_state.models_list = settings.groq.get_available_models()
+    elif platform == "openai":
+        st.session_state.models_list = settings.openai.get_available_models()
+    elif platform == "ollama":
+        st.session_state.models_list = settings.ollama.get_available_models()
+    else:
+        st.session_state.models_list = []
+    st.session_state.model = None
 
 def get_random_example() -> str:
     """
@@ -43,13 +69,77 @@ def get_random_example() -> str:
     ]
     return random.choice(examples)
 
-# -------------------------------------------------------------------------------------------------
-# Main
-# -------------------------------------------------------------------------------------------------
+def setup_sidebar() -> dict:
+    """Setup the sidebar with platform and token source selection."""
+    # Platform selector
+    platform = st.sidebar.radio(
+        "Select Platform",
+        ("ollama", "openai", "groq"),
+        key="platform",
+        index=0,
+        format_func=lambda x: {
+            "groq": "⚡️ Groq",
+            "openai": "🌐 OpenAI",
+            "ollama": "🦙 Ollama"
+        }.get(x, x),
+        on_change=get_models_list,
+        help="Select the platform to use for generating solutions."
+    )
+    # Model selector
+    model = st.sidebar.selectbox(
+        "Select Model",
+        st.session_state.models_list,
+        key="model",
+        help="Select the model to use for generating solutions."
+    )
+    # Temperature slider
+    temperature = st.sidebar.slider(
+        "Temperature",
+        min_value=0.0,
+        max_value=2.0,
+        value=1.0,
+        step=0.1,
+        key="temperature",
+        help="Temperature is a parameter that controls the randomness of the model's output."
+    )
+    # Top P slider
+    top_p = st.sidebar.slider(
+        "Top P",
+        min_value=0.0,
+        max_value=1.0,
+        value=1.0,
+        step=0.1,
+        key="top_p",
+        help="Top P is a parameter that controls the diversity of the model's output."
+    )
+    # Max tokens selector
+    max_tokens = st.sidebar.select_slider(
+        "Max Tokens",
+        options=[16, 32, 64, 128, 256, 512, 1024, 2048],
+        value=512,
+        key="max_tokens",
+        help="Max Tokens is a parameter that controls the maximum number of tokens the model can output."
+    )
+    return {
+        "platform": platform,
+        "model": model,
+        "temperature": temperature,
+        "top_p": top_p,
+        "max_tokens": max_tokens
+    }
 
 def main():
     """Main function to run the Streamlit app."""
     st.set_page_config(page_title="AI TRIZ Solution Generator", layout="wide")
+    initialize_session_state()
+    # Initialize services from sidebar
+    config = setup_sidebar()
+    llm_service = OpenAIService(config["platform"])
+    model = config["model"]
+    temperature = config["temperature"]
+    top_p = config["top_p"]
+    max_tokens = config["max_tokens"]
+    embedding_service = EmbeddingService(provider="ollama")
 
     st.write("# AI TRIZ Solution Generator 💡🤖")
 
@@ -85,7 +175,15 @@ def main():
     if generate_button:
         if user_input:
             with st.spinner('Processing...'):
-                contradiction = solve_tc(user_input)
+                contradiction = solve_tc(
+                    user_input,
+                    llm_service=llm_service,
+                    embedding_service=embedding_service,
+                    model=model,
+                    temperature=temperature,
+                    top_p=top_p,
+                    max_tokens=max_tokens
+                )
 
                 col1, col2 = st.columns([1, 3])
                 with col1:
