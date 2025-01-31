@@ -102,7 +102,7 @@ def embed_parameters(parameters: List[str], embedding_service: EmbeddingService)
         "data": parameters_data
     }
 
-def make_parameters(embedding_service: EmbeddingService) -> None:
+def make_parameters(embedding_service: EmbeddingService) -> dict:
     """
     Make parameters embeddings.
     """
@@ -113,10 +113,11 @@ def make_parameters(embedding_service: EmbeddingService) -> None:
         with open(parameters_json_path, "w", encoding='utf-8') as file:
             json.dump(data, file, indent=4)
         print(f"Successfully generated and saved embeddings to {parameters_json_path}")
+        return data
     except Exception as e: # pylint: disable=broad-except
         print(f"Failed to generate and save embeddings: {e}")
 
-def make_principles(embedding_service: EmbeddingService) -> None:
+def make_principles(embedding_service: EmbeddingService) -> dict:
     """
     Make principles embeddings.
     """
@@ -127,6 +128,7 @@ def make_principles(embedding_service: EmbeddingService) -> None:
         with open(principles_json_path, "w", encoding='utf-8') as file:
             json.dump(data, file, indent=4)
         print(f"Successfully generated and saved embeddings to {principles_json_path}")
+        return data
     except Exception as e: # pylint: disable=broad-except
         print(f"Failed to generate and save embeddings: {e}")
 
