@@ -144,7 +144,7 @@ def load_parameters() -> List[Dict]:
     try:
         with open(parameters_json_path, encoding="utf-8") as f:
             parameters = json.load(f)
-        return parameters['data']
+        return parameters
     except FileNotFoundError as e:
         raise FileNotFoundError("Parameters file not found") from e
 
@@ -162,7 +162,7 @@ def load_principles() -> List[Dict]:
     try:
         with open(principles_json_path, encoding="utf-8") as f:
             principles = json.load(f)
-        return principles['data']
+        return principles
     except FileNotFoundError as e:
         raise FileNotFoundError("Principles file not found") from e
 
@@ -181,7 +181,7 @@ def get_parameter_by_index(index: int) -> str:
         TypeError: If index is not an integer
     """
     params_data = load_parameters()
-    for param in params_data:
+    for param in params_data['data']:
         if param["index"] == index:
             return param["parameter"]
     raise IndexError(f"Parameter with index {index} not found")

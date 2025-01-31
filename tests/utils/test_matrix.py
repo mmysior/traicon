@@ -11,13 +11,13 @@ from src.utils.matrix import (
 
 def test_load_parameters():
     params = load_parameters()
-    assert isinstance(params, list)
-    assert len(params) > 0
+    assert isinstance(params, dict)
+    assert len(params['data']) > 0
 
 def test_load_principles():
     principles = load_principles()
-    assert isinstance(principles, list)
-    assert len(principles) > 0
+    assert isinstance(principles, dict)
+    assert len(principles['data']) > 0
 
 def test_get_inventive_principles():
     empty = get_inventive_principles(1, 2)
