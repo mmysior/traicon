@@ -11,7 +11,7 @@ The module uses LLM services to analyze problem descriptions and extract key com
 Parameters and principles are mapped using the TRIZ contradiction matrix.
 
 """
-from typing import Any, List, Dict
+from typing import Any, List, Dict, Union
 from uuid import uuid4
 
 from langfuse.decorators import observe, langfuse_context
@@ -19,6 +19,7 @@ from pydantic import BaseModel
 
 from app.prompts.tc_prompts import TCExtractionPrompt, ClassificationPrompt, TCSolutionPrompt
 from src.services.openai_service import OpenAIService
+from src.services.anthropic_service import AnthropicService
 from src.services.embedding_service import EmbeddingService
 from src.utils.matrix import (
     load_params_data,
@@ -26,13 +27,6 @@ from src.utils.matrix import (
     get_principle_description,
     get_principle_name
 )
-
-# -------------------------------------------------------------------------------------------------
-# Instantiate services
-# -------------------------------------------------------------------------------------------------
-
-openai_service = OpenAIService()
-embedding_service = EmbeddingService()
 
 # -------------------------------------------------------------------------------------------------
 # Define classes
@@ -70,13 +64,19 @@ class TechnicalContradiction(BaseModel):
 # -------------------------------------------------------------------------------------------------
 
 @observe(name="ClassifyProblem", capture_input=False)
-def classify_problem(problem_desc: str, model: str = "gpt-4o-mini", **kwargs: Any) -> bool:
+def classify_problem(
+    problem_desc: str,
+    llm_service: Union[OpenAIService, AnthropicService],
+    model: str = "gpt-4o-mini",
+    **kwargs: Any
+    ) -> bool:
     """
     Classify whether input text describes a technical contradiction.
 
     Args:
         problem_desc: Text to classify
-        platform: LLM platform to use (default: 'ollama')
+        llm_service: LLM service to use
+        model: LLM model to use (default: 'gpt-4o-mini')
         **kwargs: Additional arguments passed to LLM
 
     Returns:
@@ -86,7 +86,7 @@ def classify_problem(problem_desc: str, model: str = "gpt-4o-mini", **kwargs: An
         query=problem_desc
     )
 
-    response = openai_service.get_answer(
+    response = llm_service.get_answer(
         messages=messages,
         model=model,
         **kwargs
@@ -94,7 +94,12 @@ def classify_problem(problem_desc: str, model: str = "gpt-4o-mini", **kwargs: An
     return response.lower() == "true"
 
 @observe(name="ExtractTC", capture_input=False)
-def extract_tc(problem_desc: str, model: str = "gpt-4o-mini", **kwargs: Any) -> TCModel:
+def extract_tc(
+    problem_desc: str,
+    llm_service: Union[OpenAIService, AnthropicService],
+    model: str = "gpt-4o-mini",
+    **kwargs: Any
+    ) -> TCModel:
     """
     Formulate a technical contradiction from a problem description.
     """
@@ -107,7 +112,7 @@ def extract_tc(problem_desc: str, model: str = "gpt-4o-mini", **kwargs: Any) -> 
         metadata=kwargs_clone
     )
 
-    return openai_service.create_structured_completion(
+    return llm_service.create_structured_completion(
         messages=messages,
         response_model=TCModel,
         model=model,
@@ -115,7 +120,12 @@ def extract_tc(problem_desc: str, model: str = "gpt-4o-mini", **kwargs: Any) -> 
     )
 
 @observe(name="AssignParameters", capture_input=False)
-def assign_parameters(positive_effect: str, negative_effect: str, n: int = 1) -> Dict[str, List[int]]:
+def assign_parameters(
+    positive_effect: str,
+    negative_effect: str,
+    embedding_service: EmbeddingService,
+    n: int = 1
+    ) -> Dict[str, List[int]]:
     """
     Assign parameters to a description.
     """
@@ -168,6 +178,7 @@ def get_principles(improving_parameters: List[int], preserving_parameters: List[
 def generate_solutions(
     problem_desc: str,
     principles: List[int],
+    llm_service: Union[OpenAIService, AnthropicService],
     model: str = "gpt-4o-mini",
     **kwargs: Any
 ) -> List[Solution]:
@@ -205,7 +216,7 @@ def generate_solutions(
         messages = TCSolutionPrompt.compile_messages(context=context, query=problem_desc)
 
         # Generate solution
-        response = openai_service.get_answer(
+        response = llm_service.get_answer(
             messages=messages,
             model=model,
             **kwargs
@@ -229,6 +240,8 @@ def generate_solutions(
 @observe(name="SolveTC", capture_input=False)
 def solve_tc(
     problem_desc: str,
+    llm_service: Union[OpenAIService, AnthropicService],
+    embedding_service: EmbeddingService,
     n: int = 1,
     model: str = "gpt-4o-mini",
     **kwargs: Any
@@ -254,10 +267,10 @@ def solve_tc(
     )
 
     # Extract contradiction components - make this async
-    tc_model = extract_tc(problem_desc, model=model, **kwargs_clone)
+    tc_model = extract_tc(problem_desc, llm_service, model=model, **kwargs_clone)
 
     # These operations are synchronous and can remain as is
-    standard_parameters = assign_parameters(tc_model.positive_effect, tc_model.negative_effect, n=n)
+    standard_parameters = assign_parameters(tc_model.positive_effect, tc_model.negative_effect, embedding_service, n=n)
     principles = get_principles(
         improving_parameters=standard_parameters["improving_parameters"],
         preserving_parameters=standard_parameters["preserving_parameters"]
@@ -267,6 +280,7 @@ def solve_tc(
     solutions = generate_solutions(
         problem_desc=problem_desc,
         principles=principles,
+        llm_service=llm_service,
         model=model,
         **kwargs_clone
     )
