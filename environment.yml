@@ -22,4 +22,5 @@ dependencies:
     - streamlit
     - scipy
     - pytest
+    - sentence-transformers
     - -e .
