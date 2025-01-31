@@ -22,10 +22,11 @@ from src.services.openai_service import OpenAIService
 from src.services.anthropic_service import AnthropicService
 from src.services.embedding_service import EmbeddingService
 from src.utils.matrix import (
-    load_params_data,
-    get_inventive_principles,
-    get_principle_description,
-    get_principle_name
+    load_parameters,
+    load_principles,
+    make_parameters,
+    make_principles,
+    get_inventive_principles
 )
 
 # -------------------------------------------------------------------------------------------------
@@ -129,20 +130,27 @@ def assign_parameters(
     """
     Assign parameters to a description.
     """
+    # Load or generate embeddings with correct model
+    try:
+        parameters = load_parameters()
+        if parameters['metadata']['model'] != embedding_service.model:
+            parameters = make_parameters(embedding_service)
+    except FileNotFoundError:
+        parameters = make_parameters(embedding_service)
+
     def find_parameters(text: str, n: int = 1) -> List[int]:
         """
         Assign parameters to a description.
         """
         embedding = embedding_service.create_embedding(text)
-        parameters = load_params_data()
 
         distances = embedding_service.find_n_closest(
             query_vector=embedding,
-            embeddings=[param["embedding"]["vector"] for param in parameters],
+            embeddings=[param["embedding"] for param in parameters['data']],
             n=n,
         )
 
-        return [parameters[dist["index"]]["index"] for dist in distances]
+        return [parameters['data'][dist["index"]]["index"] for dist in distances]
 
     langfuse_context.update_current_observation(
         input={
@@ -177,8 +185,9 @@ def get_principles(improving_parameters: List[int], preserving_parameters: List[
 @observe(name="GenerateSolutions", capture_input=False)
 def generate_solutions(
     problem_desc: str,
-    principles: List[int],
+    selected_principles: List[int],
     llm_service: Union[OpenAIService, AnthropicService],
+    embedding_service: EmbeddingService,
     model: str = "gpt-4o-mini",
     **kwargs: Any
 ) -> List[Solution]:
@@ -199,17 +208,22 @@ def generate_solutions(
     langfuse_context.update_current_observation(
         input={
             "problem_desc": problem_desc,
-            "principles": principles
+            "principles": selected_principles
         },
         model=model,
         metadata=kwargs_clone
     )
+    # Try to load principles, create if not found
+    try:
+        principles = load_principles()
+    except FileNotFoundError:
+        principles = make_principles(embedding_service)
 
     solutions = []
-    for ip_index in principles:
+    for ip_index in selected_principles:
         # Retrieve inventive principle info
-        ip_description = get_principle_description(ip_index)
-        ip_name = get_principle_name(ip_index)
+        ip_description = principles['data'][ip_index - 1]['description']
+        ip_name = principles['data'][ip_index - 1]['name']
 
         # Build context
         context = f"Inventive Principle Name: {ip_name}\nDescription: {ip_description}"
@@ -279,8 +293,9 @@ def solve_tc(
     # Generate solutions asynchronously
     solutions = generate_solutions(
         problem_desc=problem_desc,
-        principles=principles,
+        selected_principles=principles,
         llm_service=llm_service,
+        embedding_service=embedding_service,
         model=model,
         **kwargs_clone
     )
