@@ -97,7 +97,7 @@ class EmbeddingService(BaseService):
     def find_n_closest(
         self,
         query_vector: List[float],
-        embeddings: List[List[float]],
+        embeddings: List[List[float]], 
         n: int = 3
     ) -> List[Dict[str, float]]:
         """
@@ -110,7 +110,15 @@ class EmbeddingService(BaseService):
 
         Returns:
             List of dicts containing index and distance of closest matches
+
+        Raises:
+            ValueError: If query_vector and embeddings have different dimensions
         """
+        query_len = len(query_vector)
+        for i, vec in enumerate(embeddings):
+            if len(vec) != query_len:
+                raise ValueError(f"Embedding at index {i} has length {len(vec)}, but query vector has length {query_len}")
+
         distances = [
             {"index": i, "distance": distance.cosine(query_vector, vec)}
             for i, vec in enumerate(embeddings)
