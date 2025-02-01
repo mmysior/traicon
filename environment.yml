@@ -19,8 +19,9 @@ dependencies:
     - langfuse
     - tiktoken
     - pickle-function-cache
-    - streamlit
+    - streamlit==1.38.0
     - scipy
     - pytest
+    - torch==2.1.2
     - sentence-transformers
     - -e .

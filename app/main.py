@@ -20,11 +20,11 @@ settings = get_settings()
 def initialize_session_state() -> None:
     """Initialize the session state."""
     if 'platform' not in st.session_state:
-        st.session_state.platform = "openai"
+        st.session_state.platform = "groq"
     if 'embedding_platform' not in st.session_state:
-        st.session_state.embedding_platform = "openai"
+        st.session_state.embedding_platform = "huggingface"
     if "models_list" not in st.session_state:
-        st.session_state.models_list = settings.openai.get_available_models()
+        st.session_state.models_list = settings.groq.get_available_models()
     if 'selected_llm' not in st.session_state:
         st.session_state.selected_llm = "gpt-4o-mini"
 
@@ -39,7 +39,6 @@ def get_models_list() -> None:
         st.session_state.models_list = settings.ollama.get_available_models()
     else:
         st.session_state.models_list = []
-    st.session_state.model = None
 
 def get_random_example() -> str:
     """
@@ -129,12 +128,13 @@ def setup_sidebar() -> dict:
     # Embedding platform selector
     embedding_platform = st.sidebar.radio(
         "Select Embedding Platform",
-        ("ollama", "openai"),
+        ("ollama", "openai", "huggingface"),
         key="embedding_platform",
         help="Select the embedding platform to use for generating solutions.",
         format_func=lambda x: {
             "ollama": "Ollama 🦙",
-            "openai": "OpenAI 🌐"
+            "openai": "OpenAI 🌐",
+            "huggingface": "Hugging Face 🤗"
         }.get(x, x)
     )
 
@@ -154,11 +154,11 @@ def main():
     # Initialize services from sidebar
     config = setup_sidebar()
     llm_service = OpenAIService(config["platform"])
+    embedding_service = EmbeddingService(provider=config["embedding_platform"])
     model = config["model"]
     temperature = config["temperature"]
     top_p = config["top_p"]
     max_tokens = config["max_tokens"]
-    embedding_service = EmbeddingService(provider=config["embedding_platform"])
 
     st.write("# AI TRIZ Solution Generator 💡🤖")
 

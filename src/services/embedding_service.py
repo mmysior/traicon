@@ -6,6 +6,7 @@ from typing import List, Dict
 from openai import OpenAI, AsyncOpenAI
 from dotenv import load_dotenv
 from scipy.spatial import distance
+from sentence_transformers import SentenceTransformer
 
 from src.config.settings import get_settings
 
@@ -15,7 +16,10 @@ class BaseService:
     """
     def __init__(self, provider: str = 'openai'):
         """
-        Initialize the OpenAI service.
+        Initialize the service with specified provider.
+        
+        Args:
+            provider: Service provider ('openai', 'ollama', or 'huggingface')
         """
         load_dotenv()
         self.provider = provider
@@ -25,7 +29,7 @@ class BaseService:
 
     def _get_client(self):
         """
-        Get the client for OpenAI, Groq or Ollama.
+        Get the client for OpenAI, Groq, Ollama or Hugging Face.
         """
         if self.provider == 'openai':
             return OpenAI()
@@ -34,6 +38,9 @@ class BaseService:
                 base_url=get_settings().ollama.base_url,
                 api_key=os.getenv("OLLAMA_API_KEY")
             )
+        elif self.provider == 'huggingface':
+            model_name = get_settings().huggingface.embedding_model
+            return SentenceTransformer(model_name)
         else:
             raise ValueError(f"Unsupported provider: {self.provider}")
 
@@ -45,6 +52,8 @@ class BaseService:
             return get_settings().openai.get_available_models()
         elif self.provider == 'ollama':
             return get_settings().ollama.get_available_models()
+        elif self.provider == 'huggingface':
+            return get_settings().huggingface.get_available_models()
         else:
             raise ValueError(f"Unsupported provider: {self.provider}")
 
@@ -54,8 +63,11 @@ class BaseService:
         """
         if self.provider == 'openai':
             embedding_model = get_settings().openai.embedding_model
+        elif self.provider == 'huggingface':
+            embedding_model = get_settings().huggingface.embedding_model
         else:
             embedding_model = get_settings().ollama.embedding_model
+
         if embedding_model not in self.available_models:
             raise ValueError(f"Invalid embedding model: {embedding_model}")
         return embedding_model
@@ -85,6 +97,11 @@ class EmbeddingService(BaseService):
 
         model = model or self.model
         try:
+            if self.provider == 'huggingface':
+                # Hugging Face sentence-transformers return numpy array
+                embedding = self.client.encode(text)
+                return embedding.tolist()
+
             response = self.client.embeddings.create(
                 model=model,
                 input=text

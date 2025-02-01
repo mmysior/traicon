@@ -11,6 +11,8 @@ Classes:
     OpenAISettings: Settings specific to OpenAI.
     OllamaSettings: Settings specific to Ollama.
     GroqSettings: Settings specific to Groq.
+    AnthropicSettings: Settings specific to Anthropic.
+    HuggingFaceSettings: Settings for Hugging Face models.
     Settings: Main settings class for the application.
 
 Functions:
@@ -146,6 +148,18 @@ class AnthropicSettings(LLMProviderSettings):
         """Fetch available models from local Anthropic."""
         return ["claude-3-5-sonnet-latest", "claude-3-5-sonnet-20241022"]
 
+class HuggingFaceSettings:
+    """Settings for Hugging Face models"""
+    embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
+
+    def get_available_models(self) -> List[str]:
+        """Get list of available Hugging Face models"""
+        return [
+            "sentence-transformers/all-MiniLM-L6-v2",
+            "sentence-transformers/all-mpnet-base-v2",
+            "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+        ]
+
 class Settings(BaseSettings):
     """
     Main settings class for the application.
@@ -154,11 +168,14 @@ class Settings(BaseSettings):
         openai (OpenAISettings): Settings for OpenAI.
         ollama (OllamaSettings): Settings for Ollama.
         groq (GroqSettings): Settings for Groq.
+        anthropic (AnthropicSettings): Settings for Anthropic.
+        huggingface (HuggingFaceSettings): Settings for Hugging Face models.
     """
     openai: OpenAISettings = OpenAISettings()
     ollama: OllamaSettings = OllamaSettings()
     groq: GroqSettings = GroqSettings()
     anthropic: AnthropicSettings = AnthropicSettings()
+    huggingface: HuggingFaceSettings = HuggingFaceSettings()
 
 @lru_cache
 def get_settings():
