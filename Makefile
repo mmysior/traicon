@@ -46,8 +46,10 @@ create_environment:
 	conda env create --name $(PROJECT_NAME) -f environment.yml
 	
 	@echo ">>> conda env created. Activate with:\nconda activate $(PROJECT_NAME)"
-	
 
+.PHONY: run
+run:
+	streamlit run app/main.py
 
 
 #################################################################################

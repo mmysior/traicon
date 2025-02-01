@@ -43,10 +43,7 @@ class BaseService:
         Get the client for OpenAI, Groq or Ollama.
         """
         if self.provider == 'openai':
-            return OpenAI(
-                api_key=os.getenv("OPENAI_API_KEY"),
-                base_url=get_settings().openai.base_url
-            )
+            return OpenAI()
         elif self.provider == 'groq':
             return OpenAI(
                 base_url=get_settings().groq.base_url,
@@ -233,7 +230,7 @@ class AsyncOpenAIService(BaseService):
         Get the async client for OpenAI, Groq or Ollama.
         """
         if self.provider == 'openai':
-            return AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+            return AsyncOpenAI()
         elif self.provider == 'groq':
             return AsyncOpenAI(base_url="https://api.groq.com/openai/v1", api_key=os.getenv("GROQ_API_KEY"))
         elif self.provider == 'ollama':

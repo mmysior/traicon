@@ -11,6 +11,8 @@ Classes:
     OpenAISettings: Settings specific to OpenAI.
     OllamaSettings: Settings specific to Ollama.
     GroqSettings: Settings specific to Groq.
+    AnthropicSettings: Settings specific to Anthropic.
+    HuggingFaceSettings: Settings for Hugging Face models.
     Settings: Main settings class for the application.
 
 Functions:
@@ -51,7 +53,7 @@ class OpenAISettings(LLMProviderSettings):
         default_model (str): The default model to use for OpenAI. Defaults to "gpt-4o-mini-2024-07-18".
     """
     default_model: str = "gpt-4o-mini"
-
+    embedding_model: str = "text-embedding-3-large"
     @classmethod
     def get_available_models(cls) -> List[str]:
         """Fetch the list of available models from the Groq API."""
@@ -83,6 +85,7 @@ class OllamaSettings(LLMProviderSettings):
         base_url (str): The base URL for Ollama API. Defaults to "http://localhost:11434/v1".
     """
     default_model: str = "llama3.1:8b"
+    embedding_model: str = "mxbai-embed-large:335m"
     base_url: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434") + "/v1"
 
     @classmethod
@@ -145,6 +148,18 @@ class AnthropicSettings(LLMProviderSettings):
         """Fetch available models from local Anthropic."""
         return ["claude-3-5-sonnet-latest", "claude-3-5-sonnet-20241022"]
 
+class HuggingFaceSettings:
+    """Settings for Hugging Face models"""
+    embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
+
+    def get_available_models(self) -> List[str]:
+        """Get list of available Hugging Face models"""
+        return [
+            "sentence-transformers/all-MiniLM-L6-v2",
+            "sentence-transformers/all-mpnet-base-v2",
+            "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+        ]
+
 class Settings(BaseSettings):
     """
     Main settings class for the application.
@@ -153,11 +168,14 @@ class Settings(BaseSettings):
         openai (OpenAISettings): Settings for OpenAI.
         ollama (OllamaSettings): Settings for Ollama.
         groq (GroqSettings): Settings for Groq.
+        anthropic (AnthropicSettings): Settings for Anthropic.
+        huggingface (HuggingFaceSettings): Settings for Hugging Face models.
     """
     openai: OpenAISettings = OpenAISettings()
     ollama: OllamaSettings = OllamaSettings()
     groq: GroqSettings = GroqSettings()
     anthropic: AnthropicSettings = AnthropicSettings()
+    huggingface: HuggingFaceSettings = HuggingFaceSettings()
 
 @lru_cache
 def get_settings():
