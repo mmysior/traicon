@@ -1,6 +1,8 @@
 # TRAICON
 
-TRAICON (TRIZ AI CONtradiction solver) is an AI-powered framework that helps solve technical contradictions using TRIZ methodology. It leverages various LLM providers (OpenAI, Groq, Ollama) to analyze problems and generate innovative solutions based on TRIZ principles.
+TRAICON (TRIZ AI CONtradiction solver) is an AI-powered framework that helps solve technical contradictions using TRIZ methodology. It leverages various LLM providers (OpenAI, Groq, Ollama) to analyze problems and generate innovative solutions based on TRIZ principles.  
+
+![Streamlit-app](/reports/figures/streamlit-app.png)
 
 ## Features
 
@@ -22,23 +24,11 @@ cd traicon
 2. Create and activate a Conda environment:
 
 ```
-make create_environment
+conda env create --name traicon -f environment.yml
 conda activate traicon
 ```
 
-3. Install the required dependencies:
-
-```
-make create_environment
-```
-
-or alternatively with conda:
-
-```
-conda env create --name traicon -f environment.yml
-```
-
-4. Create a `.env` file based on the example in the project root and add your API keys:
+3. Create a `.env` file based on the example in the project root and add your API keys, depending on your expected service usage:
 
 ```
 OPENAI_API_KEY=your_openai_key
